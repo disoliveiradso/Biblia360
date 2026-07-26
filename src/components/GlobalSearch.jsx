@@ -61,12 +61,11 @@ export default function GlobalSearch({ isOpen, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content" 
-        onClick={e => e.stopPropagation()} 
-        style={{ maxWidth: '650px', textAlign: 'left', padding: '1.75rem' }}
+        className="search-modal-content" 
+        onClick={e => e.stopPropagation()}
       >
         {/* Search Input Box */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
           <Search size={22} color="var(--accent-color)" />
           <input 
             type="text" 
@@ -95,20 +94,20 @@ export default function GlobalSearch({ isOpen, onClose }) {
 
         {/* Results Container */}
         {!cleanQuery ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0', fontSize: '0.95rem' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0', fontSize: '0.95rem' }}>
             Digite um termo para pesquisar na Bíblia, Harpa ou Lições da EBD.
           </p>
         ) : totalResults === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0', fontSize: '0.95rem' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0', fontSize: '0.95rem' }}>
             Nenhum resultado encontrado para "{query}".
           </p>
         ) : (
-          <div style={{ maxHeight: '420px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingRight: '0.5rem' }}>
+          <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingRight: '0.25rem' }}>
             
             {/* Bíblia Results */}
             {filteredBible.length > 0 && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.65rem' }}>
                   <Book size={16} />
                   <span>BÍBLIA SAGRADA ({filteredBible.length})</span>
                 </div>
@@ -140,7 +139,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
             {/* Harpa Results */}
             {filteredHarpa.length > 0 && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.65rem' }}>
                   <Music size={16} />
                   <span>HINOS DA HARPA ({filteredHarpa.length})</span>
                 </div>
@@ -172,7 +171,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
             {/* EBD Results */}
             {filteredEbd.length > 0 && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-color)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.65rem' }}>
                   <BookOpenCheck size={16} />
                   <span>LIÇÕES DA EBD ({filteredEbd.length})</span>
                 </div>
