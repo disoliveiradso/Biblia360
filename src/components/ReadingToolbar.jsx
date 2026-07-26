@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Eye, Contrast, Plus, Minus, Type } from 'lucide-react';
+import { Eye, Contrast, Type } from 'lucide-react';
 
 export default function ReadingToolbar() {
   const {
@@ -28,7 +28,7 @@ export default function ReadingToolbar() {
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-        {/* Font Controls */}
+        {/* Font Controls with small 'A' and large 'A' */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -42,20 +42,40 @@ export default function ReadingToolbar() {
             className="btn-outline" 
             onClick={decreaseFont} 
             title="Diminuir tamanho do texto"
-            style={{ padding: '0.3rem 0.5rem', border: 'none', borderRadius: '6px' }}
+            style={{ 
+              padding: '0.25rem 0.5rem', 
+              border: 'none', 
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: '800',
+              fontSize: '0.75rem',
+              color: 'var(--text-primary)'
+            }}
           >
-            <Minus size={14} />
+            A
           </button>
-          <span style={{ fontSize: '0.8rem', fontWeight: '700', padding: '0 0.4rem', color: 'var(--text-primary)' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: '700', padding: '0 0.35rem', color: 'var(--text-primary)' }}>
             {fontSize}px
           </span>
           <button 
             className="btn-outline" 
             onClick={increaseFont} 
             title="Aumentar tamanho do texto"
-            style={{ padding: '0.3rem 0.5rem', border: 'none', borderRadius: '6px' }}
+            style={{ 
+              padding: '0.25rem 0.5rem', 
+              border: 'none', 
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: '800',
+              fontSize: '1.05rem',
+              color: 'var(--text-primary)'
+            }}
           >
-            <Plus size={14} />
+            A
           </button>
         </div>
 

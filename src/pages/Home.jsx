@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Music, Sparkles, Download, ArrowRight, ShieldCheck, HardDriveDownload } from 'lucide-react';
+import { Book, Music, BookOpenCheck, ArrowRight, ShieldCheck, HardDriveDownload } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -137,7 +137,7 @@ export default function Home() {
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <Sparkles size={28} strokeWidth={2} />
+            <BookOpenCheck size={28} strokeWidth={2} />
           </div>
 
           <div>
@@ -146,7 +146,7 @@ export default function Home() {
             </div>
             <h2 style={{ fontSize: '1.35rem', marginBottom: '0.5rem' }}>Lições da EBD</h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              Estudos bíblicos estruturados a partir do sumário CPAD. Armazene 1 lição completa offline.
+              Estudos bíblicos estruturados por Jovens/Adultos e Trimestres. Armazene 1 lição completa offline.
             </p>
           </div>
 

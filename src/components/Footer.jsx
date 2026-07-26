@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Heart } from 'lucide-react';
+import { ShieldCheck, Github } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -16,29 +16,65 @@ export default function Footer() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '1rem',
+        gap: '1.25rem',
         textAlign: 'center'
       }}>
+        {/* Badges Side-by-Side */}
         <div style={{
-          display: 'inline-flex',
+          display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.35rem 0.85rem',
-          borderRadius: '999px',
-          backgroundColor: 'var(--accent-light)',
-          color: 'var(--accent-color)',
-          fontSize: '0.8rem',
-          fontWeight: '600'
+          gap: '0.85rem',
+          flexWrap: 'wrap',
+          justifyContent: 'center'
         }}>
-          <ShieldCheck size={14} />
-          <span>Projeto Sem Fins Lucrativos</span>
+          {/* Nonprofit Badge */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.4rem 0.95rem',
+            borderRadius: '999px',
+            backgroundColor: 'var(--accent-light)',
+            color: 'var(--accent-color)',
+            fontSize: '0.825rem',
+            fontWeight: '700'
+          }}>
+            <ShieldCheck size={16} />
+            <span>Projeto Sem Fins Lucrativos</span>
+          </div>
+
+          {/* GitHub Repository Badge */}
+          <a 
+            href="https://github.com/disoliveiradso/Biblia360"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.4rem 0.95rem',
+              borderRadius: '999px',
+              backgroundColor: 'var(--surface-color)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              fontSize: '0.825rem',
+              fontWeight: '700',
+              transition: 'all 0.2s ease'
+            }}
+            className="btn-outline"
+          >
+            <Github size={16} />
+            <span>GitHub: Bíblia360</span>
+          </a>
         </div>
 
+        {/* Legal Text Notice */}
         <p style={{
           maxWidth: '750px',
           fontSize: '0.875rem',
           color: 'var(--text-secondary)',
-          lineHeight: '1.6'
+          lineHeight: '1.6',
+          margin: 0
         }}>
           O <strong>Bíblia360</strong> funciona como um repositório e agregador de conteúdos sem fins lucrativos. 
           Todas as informações disponibilizadas podem ser acessadas e obtidas no repositório oficial do projeto.
@@ -46,13 +82,9 @@ export default function Footer() {
 
         <div style={{
           fontSize: '0.8rem',
-          color: 'var(--text-muted)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-          marginTop: '0.5rem'
+          color: 'var(--text-muted)'
         }}>
-          <span>Desenvolvido com foco em acessibilidade e leitura agradável</span>
+          <span>Desenvolvido com foco em acessibilidade, simplicidade e leitura agradável</span>
         </div>
       </div>
     </footer>
