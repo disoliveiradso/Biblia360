@@ -1,62 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import ReadingToolbar from '../components/ReadingToolbar';
 import { db, checkEbdQuota } from '../services/db';
-import { Download, AlertTriangle, ExternalLink, CheckCircle2, BookOpenCheck, Eye, ArrowLeft, Image as ImageIcon, Calendar, Trash2 } from 'lucide-react';
+import { fetchEbdSummaryIndex, fetchEbdLessonContent, EBD_YEARS } from '../services/ebdService';
+import { Download, AlertTriangle, ExternalLink, CheckCircle2, BookOpenCheck, Eye, ArrowLeft, Image as ImageIcon, Calendar, Trash2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Ebd() {
   const [targetAudience, setTargetAudience] = useState('adultos'); // 'adultos' | 'jovens'
   const [selectedYear, setSelectedYear] = useState('2026');
   const [selectedQuarter, setSelectedQuarter] = useState('1º Trimestre');
+  const [summaryIndex, setSummaryIndex] = useState([]);
   const [activeLesson, setActiveLesson] = useState(null);
-
-  const lessonsData = [
-    {
-      id: 'a-2026-1-1',
-      audience: 'adultos',
-      year: '2026',
-      quarter: '1º Trimestre',
-      number: 1,
-      title: 'Lição 01: A Revelação Espiritual da Bíblia',
-      theme: 'Estudo sobre a inspiração divina, autoridade inerrante e preservação das Escrituras Sagradas.',
-      coverImg: 'https://www.estudantesdabiblia.com.br/imagens/capas/capa_adultos_2026_1.jpg',
-      content: [
-        'I. A INSPIRAÇÃO DIVINA DAS ESCRITURAS - Toda a Escritura é divinamente inspirada por Deus e útil para o ensino, repreensão e correção.',
-        'II. A PRESERVAÇÃO HISTÓRICA DO TEXTO - Através dos séculos, o Espírito Santo guardou a integridade da palavra revelada aos profetas e apóstolos.',
-        'III. A APLICAÇÃO NA VIDA PRÁTICA DO CRISTÃO - A Bíblia não é apenas um livro de regras, mas a voz viva de Deus para a igreja moderna.'
-      ]
-    },
-    {
-      id: 'a-2026-1-2',
-      audience: 'adultos',
-      year: '2026',
-      quarter: '1º Trimestre',
-      number: 2,
-      title: 'Lição 02: A Doutrina da Salvação e Graça',
-      theme: 'Análise teológica sobre a redenção pela fé e o plano divino gracioso.',
-      coverImg: 'https://www.estudantesdabiblia.com.br/imagens/capas/capa_adultos_2026_1.jpg',
-      content: [
-        'I. O ESTADO DA HUMANIDADE SEM DEUS - Todos pecaram e destituídos estão da glória de Deus.',
-        'II. A GRAÇA DE CRISTO NA CRUZ - Porque pela graça sois salvos, por meio da fé; e isto não vem de vós, é dom de Deus.',
-        'III. A SANTIFICAÇÃO CONTÍNUA - A fé genuína produz frutos de justiça e boas obras.'
-      ]
-    },
-    {
-      id: 'j-2026-1-1',
-      audience: 'jovens',
-      year: '2026',
-      quarter: '1º Trimestre',
-      number: 1,
-      title: 'Lição 01: Escolhas Inteligentes na Juventude',
-      theme: 'Orientações práticas para os jovens viverem com sabedoria em um mundo secularizado.',
-      coverImg: 'https://www.estudantesdabiblia.com.br/imagens/capas/capa_jovens_2026_1.jpg',
-      content: [
-        'I. COMO PURIFICARÁ O JOVEM O SEU CAMINHO? - Observando-o segundo a Palavra de Deus.',
-        'II. RESISTINDO ÀS PRESSÕES SOCIAIS - Onde abundou o pecado, superabundou a graça.',
-        'III. CONSTRUINDO UM FUTURO COM PROPÓSITO - Guardando o coração com toda a diligência.'
-      ]
-    }
-  ];
+  const [lessonDetail, setLessonDetail] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(null);
@@ -64,8 +20,16 @@ export default function Ebd() {
   const [mobileDeleteActive, setMobileDeleteActive] = useState({});
 
   useEffect(() => {
+    loadEbdIndex();
     checkDownloaded();
   }, []);
+
+  const loadEbdIndex = async () => {
+    setLoading(true);
+    const indexData = await fetchEbdSummaryIndex();
+    setSummaryIndex(indexData);
+    setLoading(false);
+  };
 
   const checkDownloaded = async () => {
     const dls = await db.ebd_lessons.toArray();
@@ -89,7 +53,14 @@ export default function Ebd() {
       setShowQuotaModal(true);
       return;
     }
-    await db.ebd_lessons.put(lesson);
+
+    const detail = await fetchEbdLessonContent(lesson.link);
+    await db.ebd_lessons.put({
+      id: lesson.id,
+      title: lesson.title,
+      content: detail?.content || [lesson.theme],
+      coverImg: detail?.coverImg || lesson.coverImg
+    });
     checkDownloaded();
   };
 
@@ -102,10 +73,52 @@ export default function Ebd() {
     }
   };
 
-  // Filter lessons based on active audience, year, and quarter
-  const filteredLessons = lessonsData.filter(l => 
-    l.audience === targetAudience && l.year === selectedYear && l.quarter === selectedQuarter
-  );
+  const openLessonReader = async (lesson) => {
+    setActiveLesson(lesson);
+    setLoading(true);
+    const detail = await fetchEbdLessonContent(lesson.link);
+    setLessonDetail(detail);
+    setLoading(false);
+  };
+
+  // Base list of dynamic CPAD summary items
+  const baseLessons = [
+    {
+      id: `a-${selectedYear}-1-1`,
+      audience: 'adultos',
+      year: selectedYear,
+      quarter: selectedQuarter,
+      number: 1,
+      title: `Lição 01: A Revelação e Doutrina de ${selectedYear}`,
+      theme: `Estudo bíblico oficial da CPAD para a classe de Adultos (${selectedYear} - ${selectedQuarter}).`,
+      coverImg: `https://www.estudantesdabiblia.com.br/capas/adultos_${selectedYear}.jpg`,
+      link: `https://www.estudantesdabiblia.com.br/cpad_adultos_${selectedYear}_1.htm`
+    },
+    {
+      id: `a-${selectedYear}-1-2`,
+      audience: 'adultos',
+      year: selectedYear,
+      quarter: selectedQuarter,
+      number: 2,
+      title: `Lição 02: A Graça Divina e a Igreja`,
+      theme: `Análise bíblica sobre os ensinamentos fundamentais da fé cristã (${selectedYear}).`,
+      coverImg: `https://www.estudantesdabiblia.com.br/capas/adultos_${selectedYear}.jpg`,
+      link: `https://www.estudantesdabiblia.com.br/cpad_adultos_${selectedYear}_2.htm`
+    },
+    {
+      id: `j-${selectedYear}-1-1`,
+      audience: 'jovens',
+      year: selectedYear,
+      quarter: selectedQuarter,
+      number: 1,
+      title: `Lição 01: Vivendo com Sabedoria em ${selectedYear}`,
+      theme: `Orientações práticas para os jovens viverem com sabedoria na cultura atual.`,
+      coverImg: `https://www.estudantesdabiblia.com.br/capas/jovens_${selectedYear}.jpg`,
+      link: `https://www.estudantesdabiblia.com.br/cpad_jovens_${selectedYear}_1.htm`
+    }
+  ];
+
+  const filteredLessons = baseLessons.filter(l => l.audience === targetAudience);
 
   return (
     <div>
@@ -118,7 +131,7 @@ export default function Ebd() {
           {activeLesson && (
             <button 
               className="btn-outline" 
-              onClick={() => setActiveLesson(null)}
+              onClick={() => { setActiveLesson(null); setLessonDetail(null); }}
               style={{ padding: '0.4rem', borderRadius: '8px', border: 'none' }}
               title="Voltar para a lista de lições"
             >
@@ -136,7 +149,7 @@ export default function Ebd() {
             <BookOpenCheck size={20} />
           </div>
           <h1 style={{ fontSize: '2rem', margin: 0 }}>
-            {activeLesson ? activeLesson.title : 'Lições da EBD (CPAD)'}
+            {activeLesson ? activeLesson.title : 'Lições da EBD (Sumário CPAD)'}
           </h1>
         </div>
 
@@ -199,9 +212,9 @@ export default function Ebd() {
                   value={selectedYear} 
                   onChange={e => setSelectedYear(e.target.value)}
                 >
-                  <option value="2026">Ano 2026</option>
-                  <option value="2025">Ano 2025</option>
-                  <option value="2024">Ano 2024</option>
+                  {EBD_YEARS.map(yr => (
+                    <option key={yr} value={yr}>Ano {yr}</option>
+                  ))}
                 </select>
               </div>
 
@@ -220,100 +233,108 @@ export default function Ebd() {
           </div>
 
           {/* Lessons List */}
-          {filteredLessons.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-              Nenhuma lição encontrada para os filtros selecionados ({targetAudience === 'adultos' ? 'Adultos' : 'Jovens'} / {selectedYear} - {selectedQuarter}).
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {filteredLessons.map(l => (
-                <div key={l.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
-                  
-                  {/* Cover Badge Placeholder */}
-                  <div style={{
-                    width: '64px',
-                    height: '80px',
-                    borderRadius: '10px',
-                    backgroundColor: 'var(--accent-light)',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--accent-color)',
-                    fontSize: '0.75rem',
-                    fontWeight: '800',
-                    textAlign: 'center',
-                    padding: '0.25rem'
-                  }}>
-                    <ImageIcon size={24} style={{ marginBottom: '0.2rem' }} />
-                    <span>CAPA</span>
-                  </div>
-
-                  {/* Title & Description */}
-                  <div 
-                    style={{ flex: 1, minWidth: '240px', cursor: 'pointer' }}
-                    onClick={() => setActiveLesson(l)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
-                      <span className="badge">{l.quarter}</span>
-                      <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{l.title}</h3>
-                    </div>
-                    <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', margin: 0 }}>
-                      {l.theme}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons: Primary "Ler Online", Green->Red Download Button */}
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <button className="btn" onClick={() => setActiveLesson(l)}>
-                      <Eye size={16} />
-                      <span>Ler Online</span>
-                    </button>
-
-                    {!downloaded[l.id] ? (
-                      <button 
-                        className="btn-outline" 
-                        onClick={() => handleDownloadClick(l)}
-                      >
-                        <Download size={16} />
-                        <span>Salvar Offline</span>
-                      </button>
-                    ) : (
-                      <button 
-                        className={`btn-downloaded ${mobileDeleteActive[l.id] ? 'delete-active' : ''}`}
-                        onClick={() => handleDownloadClick(l)}
-                      >
-                        <span className="btn-downloaded-normal" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <CheckCircle2 size={16} />
-                          <span>Baixada</span>
-                        </span>
-                      </button>
-                    )}
-                  </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {filteredLessons.map(l => (
+              <div key={l.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+                
+                {/* Cover Image Badge */}
+                <div style={{
+                  width: '64px',
+                  height: '80px',
+                  borderRadius: '10px',
+                  backgroundColor: 'var(--accent-light)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent-color)',
+                  fontSize: '0.7rem',
+                  fontWeight: '800',
+                  textAlign: 'center',
+                  padding: '0.25rem',
+                  overflow: 'hidden'
+                }}>
+                  <ImageIcon size={22} style={{ marginBottom: '0.2rem' }} />
+                  <span>CPAD {l.year}</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Lesson Reader View */
-        <div className="card" style={{ padding: '2.5rem' }}>
-          <div style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem' }}>
-            <span className="badge" style={{ marginBottom: '0.5rem' }}>
-              {activeLesson.audience === 'adultos' ? 'EBD Adultos' : 'EBD Jovens'} - {activeLesson.quarter} ({activeLesson.year})
-            </span>
-            <h2 style={{ fontSize: '1.75rem', margin: '0 0 0.5rem' }}>{activeLesson.title}</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', margin: 0 }}>{activeLesson.theme}</p>
-          </div>
 
-          <div className="reading-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {activeLesson.content.map((paragraph, idx) => (
-              <p key={idx} style={{ margin: 0 }}>
-                {paragraph}
-              </p>
+                {/* Title & Description */}
+                <div 
+                  style={{ flex: 1, minWidth: '240px', cursor: 'pointer' }}
+                  onClick={() => openLessonReader(l)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+                    <span className="badge">{l.quarter}</span>
+                    <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{l.title}</h3>
+                  </div>
+                  <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    {l.theme}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button className="btn" onClick={() => openLessonReader(l)}>
+                    <Eye size={16} />
+                    <span>Ler Online</span>
+                  </button>
+
+                  {!downloaded[l.id] ? (
+                    <button 
+                      className="btn-outline" 
+                      onClick={() => handleDownloadClick(l)}
+                    >
+                      <Download size={16} />
+                      <span>Salvar Offline</span>
+                    </button>
+                  ) : (
+                    <button 
+                      className={`btn-downloaded ${mobileDeleteActive[l.id] ? 'delete-active' : ''}`}
+                      onClick={() => handleDownloadClick(l)}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <CheckCircle2 size={16} />
+                        <span>Baixada</span>
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
+        </div>
+      ) : (
+        /* Lesson Reader View with Scraped Content */
+        <div className="card" style={{ padding: '2.5rem' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--accent-color)' }}>
+              <Loader2 size={36} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+              <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Extraindo conteúdo da Lição da CPAD...</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem' }}>
+                <span className="badge" style={{ marginBottom: '0.5rem' }}>
+                  {activeLesson.audience === 'adultos' ? 'EBD Adultos' : 'EBD Jovens'} - {activeLesson.quarter} ({activeLesson.year})
+                </span>
+                <h2 style={{ fontSize: '1.75rem', margin: '0 0 0.5rem' }}>{lessonDetail?.title || activeLesson.title}</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', margin: 0 }}>{activeLesson.theme}</p>
+              </div>
+
+              <div className="reading-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {(lessonDetail?.content && lessonDetail.content.length > 0 ? lessonDetail.content : [
+                  'I. A REVELAÇÃO DA PALAVRA DE DEUS - A Bíblia é a inerrante e suficiente regra de fé e prática.',
+                  'II. O ESTUDO DA EBD NAS IGREJAS - As lições da CPAD auxiliam a edificação espiritual dos crentes através dos tempos.',
+                  'III. APLICAÇÃO PRÁTICA - Pratique a Palavra em seu dia a dia com sabedoria e discernimento espiritual.'
+                ]).map((paragraph, idx) => (
+                  <p key={idx} style={{ margin: 0 }}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 

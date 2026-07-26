@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import ReadingToolbar from '../components/ReadingToolbar';
 import { db } from '../services/db';
-import { Download, ExternalLink, CheckCircle2, Music, Eye, ArrowLeft, Trash2 } from 'lucide-react';
+import { fetchHymnDetail, HARPA_CATALOG } from '../services/harpaService';
+import { Download, ExternalLink, CheckCircle2, Music, Eye, ArrowLeft, Trash2, Loader2, Search } from 'lucide-react';
 
 export default function Harpa() {
-  const [hymns] = useState([
-    { number: '1', title: 'Chuvas de Graça', stanzas: ['Deus prometeu com certeza, chuvas de graça mandar;', 'Ele nos dá fortaleza, para o Seu nome exaltar.', 'Chuvas de graça, chuvas pedimos a Ti;', 'Manda-nos já, ó Senhor, bênçãos que fruam aqui.'] },
-    { number: '2', title: 'Saudosa Lembrança', stanzas: ['Oh! quão saudosa lembrança tenho de ti, ó Sião,', 'Terra que eu tanto amo, pois és do meu coração.', 'Já meus pés estão cansados de caminhar na terra,', 'Mas eu sei que logo chegarei à Pátria celestial.'] },
-    { number: '3', title: 'Plena Vida', stanzas: ['Plena vida, paz e gozo, tenho em meu Salvador;', 'Que por mim na cruz sofreu, por Seu infinito amor.'] },
-    { number: '4', title: 'Deus Tomará Conta de Ti', stanzas: ['Em todo o tempo, em qualquer lugar,', 'Deus tomará conta de ti!'] }
-  ]);
-
+  const [hymns] = useState(HARPA_CATALOG);
   const [activeHymn, setActiveHymn] = useState(null);
+  const [hymnDetail, setHymnDetail] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [filterQuery, setFilterQuery] = useState('');
+
   const [downloaded, setDownloaded] = useState({});
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(null);
   const [mobileDeleteActive, setMobileDeleteActive] = useState({});
@@ -37,7 +36,9 @@ export default function Harpa() {
       return;
     }
 
-    await db.harpa_hymns.put(hymn);
+    // Fetch full stanzas before saving offline
+    const detail = await fetchHymnDetail(hymn.number);
+    await db.harpa_hymns.put(detail);
     checkDownloaded();
   };
 
@@ -50,6 +51,18 @@ export default function Harpa() {
     }
   };
 
+  const openHymnReader = async (hymn) => {
+    setActiveHymn(hymn);
+    setLoading(true);
+    const detail = await fetchHymnDetail(hymn.number);
+    setHymnDetail(detail);
+    setLoading(false);
+  };
+
+  const filteredHymns = hymns.filter(h => 
+    h.number.includes(filterQuery.trim()) || h.title.toLowerCase().includes(filterQuery.toLowerCase().trim())
+  );
+
   return (
     <div>
       {/* Show ReadingToolbar ONLY during active hymn reading */}
@@ -61,7 +74,7 @@ export default function Harpa() {
           {activeHymn && (
             <button 
               className="btn-outline" 
-              onClick={() => setActiveHymn(null)}
+              onClick={() => { setActiveHymn(null); setHymnDetail(null); }}
               style={{ padding: '0.4rem', borderRadius: '8px', border: 'none' }}
               title="Voltar para a lista"
             >
@@ -97,69 +110,89 @@ export default function Harpa() {
         </p>
       </div>
 
-      {/* Hymns Catalog List */}
+      {/* Catalog Search & List View */}
       {!activeHymn ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {hymns.map(h => (
-            <div key={h.number} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <div 
-                style={{ flex: 1, minWidth: '240px', cursor: 'pointer' }}
-                onClick={() => setActiveHymn(h)}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
-                  <span className="badge">Hino #{h.number}</span>
-                  <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{h.title}</h3>
-                </div>
-                <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', margin: 0, fontStyle: 'italic' }}>
-                  "{h.stanzas[0]}"
-                </p>
-              </div>
-
-              {/* Action Buttons: Primary "Ler Online", Green->Red Download Button */}
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <button className="btn" onClick={() => setActiveHymn(h)}>
-                  <Eye size={16} />
-                  <span>Ler Online</span>
-                </button>
-
-                {!downloaded[h.number] ? (
-                  <button 
-                    className="btn-outline" 
-                    onClick={() => handleDownloadClick(h)}
-                  >
-                    <Download size={16} />
-                    <span>Salvar Offline</span>
-                  </button>
-                ) : (
-                  <button 
-                    className={`btn-downloaded ${mobileDeleteActive[h.number] ? 'delete-active' : ''}`}
-                    onClick={() => handleDownloadClick(h)}
-                  >
-                    <span className="btn-downloaded-normal" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <CheckCircle2 size={16} />
-                      <span>Baixado</span>
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        /* Hymn Reader View */
-        <div className="card" style={{ padding: '2.5rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem' }}>
-            <span className="badge" style={{ marginBottom: '0.5rem' }}>Harpa Cristã</span>
-            <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Hino #{activeHymn.number} - {activeHymn.title}</h2>
+        <div>
+          {/* Quick Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.65rem 1rem', marginBottom: '1.75rem', maxWidth: '400px' }}>
+            <Search size={18} color="var(--accent-color)" />
+            <input 
+              type="text" 
+              placeholder="Filtrar por número ou título do hino..."
+              value={filterQuery}
+              onChange={e => setFilterQuery(e.target.value)}
+              style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', width: '100%', fontSize: '0.9rem' }}
+            />
           </div>
 
-          <div className="reading-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'center' }}>
-            {activeHymn.stanzas.map((stanza, idx) => (
-              <p key={idx} style={{ margin: 0, lineHeight: '2' }}>
-                {stanza}
-              </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {filteredHymns.map(h => (
+              <div key={h.number} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div 
+                  style={{ flex: 1, minWidth: '240px', cursor: 'pointer' }}
+                  onClick={() => openHymnReader(h)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                    <span className="badge">Hino #{h.number}</span>
+                    <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{h.title}</h3>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button className="btn" onClick={() => openHymnReader(h)}>
+                    <Eye size={16} />
+                    <span>Ler Online</span>
+                  </button>
+
+                  {!downloaded[h.number] ? (
+                    <button 
+                      className="btn-outline" 
+                      onClick={() => handleDownloadClick(h)}
+                    >
+                      <Download size={16} />
+                      <span>Salvar Offline</span>
+                    </button>
+                  ) : (
+                    <button 
+                      className={`btn-downloaded ${mobileDeleteActive[h.number] ? 'delete-active' : ''}`}
+                      onClick={() => handleDownloadClick(h)}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <CheckCircle2 size={16} />
+                        <span>Baixado</span>
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
+        </div>
+      ) : (
+        /* Hymn Reader View with Loading Spinner & Real Scraped Lyrics */
+        <div className="card" style={{ padding: '2.5rem' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--accent-color)' }}>
+              <Loader2 size={36} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+              <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Carregando letra do Hino #{activeHymn.number}...</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem' }}>
+                <span className="badge" style={{ marginBottom: '0.5rem' }}>Harpa Cristã</span>
+                <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Hino #{hymnDetail?.number || activeHymn.number} - {hymnDetail?.title || activeHymn.title}</h2>
+              </div>
+
+              <div className="reading-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'center' }}>
+                {hymnDetail?.stanzas.map((stanza, idx) => (
+                  <p key={idx} style={{ margin: 0, lineHeight: '2' }}>
+                    {stanza}
+                  </p>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
