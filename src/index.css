@@ -1,0 +1,134 @@
+:root {
+  /* Cores Light Mode */
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --primary-color: #2b6cb0;
+  --secondary-bg: #f7fafc;
+  --border-color: #e2e8f0;
+  --nav-bg: #ffffff;
+  --footer-bg: #f7fafc;
+  
+  /* Variáveis de acessibilidade dinâmicas */
+  --font-size-base: 16px;
+  --font-family-ui: 'Inter', system-ui, sans-serif;
+  --font-family-reading: 'Georgia', 'Merriweather', serif;
+  --sepia-filter: sepia(0);
+  --invert-filter: invert(0);
+}
+
+/* Modo Escuro */
+[data-theme='dark'] {
+  --bg-color: #1a202c;
+  --text-color: #e2e8f0;
+  --primary-color: #63b3ed;
+  --secondary-bg: #2d3748;
+  --border-color: #4a5568;
+  --nav-bg: #1a202c;
+  --footer-bg: #2d3748;
+}
+
+/* Modo Alto Contraste */
+[data-theme='high-contrast'] {
+  --bg-color: #000000;
+  --text-color: #ffff00;
+  --primary-color: #00ff00;
+  --secondary-bg: #000000;
+  --border-color: #ffffff;
+  --nav-bg: #000000;
+  --footer-bg: #000000;
+  --invert-filter: invert(0) !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-ui);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: var(--font-size-base);
+  transition: background-color 0.3s, color 0.3s;
+  /* Filtros para acessibilidade */
+  filter: var(--sepia-filter) var(--invert-filter);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.reading-content {
+  font-family: var(--font-family-reading);
+  line-height: 1.8;
+  font-size: 1.1em;
+}
+
+/* Utilitários */
+.btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.card {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Modais */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: var(--bg-color);
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
