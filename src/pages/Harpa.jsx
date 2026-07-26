@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReadingToolbar from '../components/ReadingToolbar';
 import { db } from '../services/db';
-import { Download, ExternalLink, CheckCircle2, Music, Eye, ArrowLeft } from 'lucide-react';
+import { Download, ExternalLink, CheckCircle2, Music, Eye, ArrowLeft, Trash2 } from 'lucide-react';
 
 export default function Harpa() {
   const [hymns] = useState([
@@ -13,6 +13,8 @@ export default function Harpa() {
 
   const [activeHymn, setActiveHymn] = useState(null);
   const [downloaded, setDownloaded] = useState({});
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState(null);
+  const [mobileDeleteActive, setMobileDeleteActive] = useState({});
 
   useEffect(() => {
     checkDownloaded();
@@ -25,10 +27,27 @@ export default function Harpa() {
     setDownloaded(map);
   };
 
-  const handleDownload = async (hymn) => {
-    if (downloaded[hymn.number]) return;
+  const handleDownloadClick = async (hymn) => {
+    if (downloaded[hymn.number]) {
+      if (window.innerWidth <= 768 && !mobileDeleteActive[hymn.number]) {
+        setMobileDeleteActive(prev => ({ ...prev, [hymn.number]: true }));
+      } else {
+        setConfirmDeleteModal(hymn);
+      }
+      return;
+    }
+
     await db.harpa_hymns.put(hymn);
     checkDownloaded();
+  };
+
+  const confirmDelete = async () => {
+    if (confirmDeleteModal) {
+      await db.harpa_hymns.delete(confirmDeleteModal.number);
+      setConfirmDeleteModal(null);
+      setMobileDeleteActive({});
+      checkDownloaded();
+    }
   };
 
   return (
@@ -96,34 +115,32 @@ export default function Harpa() {
                 </p>
               </div>
 
-              {/* Action Buttons: Primary "Ler Online", Secondary Gray "Salvar Offline" */}
+              {/* Action Buttons: Primary "Ler Online", Green->Red Download Button */}
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button className="btn" onClick={() => setActiveHymn(h)}>
                   <Eye size={16} />
                   <span>Ler Online</span>
                 </button>
 
-                <button 
-                  className="btn-outline" 
-                  onClick={() => handleDownload(h)}
-                  disabled={downloaded[h.number]}
-                  style={{
-                    borderColor: 'var(--border-color)',
-                    color: downloaded[h.number] ? 'var(--text-muted)' : 'var(--text-secondary)'
-                  }}
-                >
-                  {downloaded[h.number] ? (
-                    <>
-                      <CheckCircle2 size={16} color="var(--accent-color)" />
+                {!downloaded[h.number] ? (
+                  <button 
+                    className="btn-outline" 
+                    onClick={() => handleDownloadClick(h)}
+                  >
+                    <Download size={16} />
+                    <span>Salvar Offline</span>
+                  </button>
+                ) : (
+                  <button 
+                    className={`btn-downloaded ${mobileDeleteActive[h.number] ? 'delete-active' : ''}`}
+                    onClick={() => handleDownloadClick(h)}
+                  >
+                    <span className="btn-downloaded-normal" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <CheckCircle2 size={16} />
                       <span>Baixado</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download size={16} />
-                      <span>Salvar Offline</span>
-                    </>
-                  )}
-                </button>
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -131,7 +148,7 @@ export default function Harpa() {
       ) : (
         /* Hymn Reader View */
         <div className="card" style={{ padding: '2.5rem' }}>
-          <div style={{ textAlignment: 'center', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', pb: '1.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem' }}>
             <span className="badge" style={{ marginBottom: '0.5rem' }}>Harpa Cristã</span>
             <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Hino #{activeHymn.number} - {activeHymn.title}</h2>
           </div>
@@ -142,6 +159,46 @@ export default function Harpa() {
                 {stanza}
               </p>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Deletion Modal */}
+      {confirmDeleteModal && (
+        <div className="modal-overlay" onClick={() => setConfirmDeleteModal(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem'
+            }}>
+              <Trash2 size={32} />
+            </div>
+
+            <h3 style={{ fontSize: '1.35rem', marginBottom: '0.75rem' }}>Excluir Conteúdo Offline</h3>
+            
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
+              Deseja realmente remover o <strong>Hino #{confirmDeleteModal.number} - {confirmDeleteModal.title}</strong> do seu armazenamento local?
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button className="btn btn-outline" onClick={() => setConfirmDeleteModal(null)}>
+                Cancelar
+              </button>
+              <button 
+                className="btn" 
+                style={{ backgroundColor: '#ef4444', borderColor: '#ef4444' }} 
+                onClick={confirmDelete}
+              >
+                Confirmar Exclusão
+              </button>
+            </div>
           </div>
         </div>
       )}

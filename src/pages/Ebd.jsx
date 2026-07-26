@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReadingToolbar from '../components/ReadingToolbar';
 import { db, checkEbdQuota } from '../services/db';
-import { Download, AlertTriangle, ExternalLink, CheckCircle2, BookOpenCheck, Eye, ArrowLeft, Image as ImageIcon, Calendar } from 'lucide-react';
+import { Download, AlertTriangle, ExternalLink, CheckCircle2, BookOpenCheck, Eye, ArrowLeft, Image as ImageIcon, Calendar, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Ebd() {
@@ -58,8 +58,10 @@ export default function Ebd() {
     }
   ];
 
-  const [showModal, setShowModal] = useState(false);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState(null);
   const [downloaded, setDownloaded] = useState({});
+  const [mobileDeleteActive, setMobileDeleteActive] = useState({});
 
   useEffect(() => {
     checkDownloaded();
@@ -72,14 +74,32 @@ export default function Ebd() {
     setDownloaded(map);
   };
 
-  const handleDownload = async (lesson) => {
+  const handleDownloadClick = async (lesson) => {
+    if (downloaded[lesson.id]) {
+      if (window.innerWidth <= 768 && !mobileDeleteActive[lesson.id]) {
+        setMobileDeleteActive(prev => ({ ...prev, [lesson.id]: true }));
+      } else {
+        setConfirmDeleteModal(lesson);
+      }
+      return;
+    }
+
     const quotaMet = await checkEbdQuota();
-    if (quotaMet && !downloaded[lesson.id]) {
-      setShowModal(true);
+    if (quotaMet) {
+      setShowQuotaModal(true);
       return;
     }
     await db.ebd_lessons.put(lesson);
     checkDownloaded();
+  };
+
+  const confirmDelete = async () => {
+    if (confirmDeleteModal) {
+      await db.ebd_lessons.delete(confirmDeleteModal.id);
+      setConfirmDeleteModal(null);
+      setMobileDeleteActive({});
+      checkDownloaded();
+    }
   };
 
   // Filter lessons based on active audience, year, and quarter
@@ -178,11 +198,10 @@ export default function Ebd() {
                 <select 
                   value={selectedYear} 
                   onChange={e => setSelectedYear(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontWeight: '600', outline: 'none', cursor: 'pointer' }}
                 >
-                  <option value="2026" style={{ background: 'var(--surface-color)' }}>Ano 2026</option>
-                  <option value="2025" style={{ background: 'var(--surface-color)' }}>Ano 2025</option>
-                  <option value="2024" style={{ background: 'var(--surface-color)' }}>Ano 2024</option>
+                  <option value="2026">Ano 2026</option>
+                  <option value="2025">Ano 2025</option>
+                  <option value="2024">Ano 2024</option>
                 </select>
               </div>
 
@@ -190,12 +209,11 @@ export default function Ebd() {
                 <select 
                   value={selectedQuarter} 
                   onChange={e => setSelectedQuarter(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontWeight: '600', outline: 'none', cursor: 'pointer' }}
                 >
-                  <option value="1º Trimestre" style={{ background: 'var(--surface-color)' }}>1º Trimestre</option>
-                  <option value="2º Trimestre" style={{ background: 'var(--surface-color)' }}>2º Trimestre</option>
-                  <option value="3º Trimestre" style={{ background: 'var(--surface-color)' }}>3º Trimestre</option>
-                  <option value="4º Trimestre" style={{ background: 'var(--surface-color)' }}>4º Trimestre</option>
+                  <option value="1º Trimestre">1º Trimestre</option>
+                  <option value="2º Trimestre">2º Trimestre</option>
+                  <option value="3º Trimestre">3º Trimestre</option>
+                  <option value="4º Trimestre">4º Trimestre</option>
                 </select>
               </div>
             </div>
@@ -246,34 +264,32 @@ export default function Ebd() {
                     </p>
                   </div>
 
-                  {/* Action Buttons: Primary "Ler Online", Secondary Gray "Salvar Offline" */}
+                  {/* Action Buttons: Primary "Ler Online", Green->Red Download Button */}
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <button className="btn" onClick={() => setActiveLesson(l)}>
                       <Eye size={16} />
                       <span>Ler Online</span>
                     </button>
 
-                    <button 
-                      className="btn-outline" 
-                      onClick={() => handleDownload(l)}
-                      disabled={downloaded[l.id]}
-                      style={{
-                        borderColor: 'var(--border-color)',
-                        color: downloaded[l.id] ? 'var(--text-muted)' : 'var(--text-secondary)'
-                      }}
-                    >
-                      {downloaded[l.id] ? (
-                        <>
-                          <CheckCircle2 size={16} color="var(--accent-color)" />
+                    {!downloaded[l.id] ? (
+                      <button 
+                        className="btn-outline" 
+                        onClick={() => handleDownloadClick(l)}
+                      >
+                        <Download size={16} />
+                        <span>Salvar Offline</span>
+                      </button>
+                    ) : (
+                      <button 
+                        className={`btn-downloaded ${mobileDeleteActive[l.id] ? 'delete-active' : ''}`}
+                        onClick={() => handleDownloadClick(l)}
+                      >
+                        <span className="btn-downloaded-normal" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <CheckCircle2 size={16} />
                           <span>Baixada</span>
-                        </>
-                      ) : (
-                        <>
-                          <Download size={16} />
-                          <span>Salvar Offline</span>
-                        </>
-                      )}
-                    </button>
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -283,7 +299,7 @@ export default function Ebd() {
       ) : (
         /* Lesson Reader View */
         <div className="card" style={{ padding: '2.5rem' }}>
-          <div style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', pb: '1.5rem' }}>
+          <div style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem' }}>
             <span className="badge" style={{ marginBottom: '0.5rem' }}>
               {activeLesson.audience === 'adultos' ? 'EBD Adultos' : 'EBD Jovens'} - {activeLesson.quarter} ({activeLesson.year})
             </span>
@@ -302,8 +318,8 @@ export default function Ebd() {
       )}
 
       {/* Quota Exceeded Modal */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+      {showQuotaModal && (
+        <div className="modal-overlay" onClick={() => setShowQuotaModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div style={{
               width: '56px',
@@ -326,12 +342,52 @@ export default function Ebd() {
             </p>
 
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-              <button className="btn btn-outline" onClick={() => setShowModal(false)}>
+              <button className="btn btn-outline" onClick={() => setShowQuotaModal(false)}>
                 Cancelar
               </button>
               <Link to="/meus-downloads" className="btn">
                 Ir para Downloads
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Deletion Modal */}
+      {confirmDeleteModal && (
+        <div className="modal-overlay" onClick={() => setConfirmDeleteModal(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem'
+            }}>
+              <Trash2 size={32} />
+            </div>
+
+            <h3 style={{ fontSize: '1.35rem', marginBottom: '0.75rem' }}>Excluir Conteúdo Offline</h3>
+            
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
+              Deseja realmente remover a <strong>{confirmDeleteModal.title}</strong> do seu armazenamento local?
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button className="btn btn-outline" onClick={() => setConfirmDeleteModal(null)}>
+                Cancelar
+              </button>
+              <button 
+                className="btn" 
+                style={{ backgroundColor: '#ef4444', borderColor: '#ef4444' }} 
+                onClick={confirmDelete}
+              >
+                Confirmar Exclusão
+              </button>
             </div>
           </div>
         </div>

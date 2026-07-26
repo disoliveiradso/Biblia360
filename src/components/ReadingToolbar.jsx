@@ -12,8 +12,8 @@ export default function ReadingToolbar() {
   return (
     <div className="glass-panel" style={{
       position: 'sticky',
-      top: '5rem',
-      zIndex: 90,
+      top: '4.25rem',
+      zIndex: 80,
       padding: '0.65rem 1.25rem',
       display: 'flex',
       gap: '0.75rem',

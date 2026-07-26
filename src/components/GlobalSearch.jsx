@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X, Book, Music, BookOpenCheck, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function GlobalSearch({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => document.body.classList.remove('modal-open');
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

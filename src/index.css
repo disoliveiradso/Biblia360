@@ -23,7 +23,7 @@
   --footer-bg: #f4f4f5;
   --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
   --card-shadow-hover: 0 12px 30px -4px rgba(0, 0, 0, 0.12);
-  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(228, 228, 231, 0.8);
 }
 
@@ -39,11 +39,11 @@
   --accent-color: #f59e0b;
   --accent-hover: #fbbf24;
   --accent-light: rgba(245, 158, 11, 0.15);
-  --nav-bg: rgba(18, 18, 18, 0.85);
+  --nav-bg: rgba(18, 18, 18, 0.9);
   --footer-bg: #18181b;
   --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
   --card-shadow-hover: 0 12px 30px -4px rgba(0, 0, 0, 0.6);
-  --glass-bg: rgba(39, 39, 39, 0.8);
+  --glass-bg: rgba(39, 39, 39, 0.85);
   --glass-border: rgba(63, 63, 70, 0.8);
 }
 
@@ -86,6 +86,10 @@ body {
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
+}
+
+body.modal-open {
+  overflow: hidden !important;
 }
 
 #root {
@@ -171,10 +175,82 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: none;
 }
 
-.btn-sm {
-  padding: 0.4rem 0.85rem;
-  font-size: 0.875rem;
-  border-radius: 8px;
+/* Green Downloaded Button State with Red Hover Delete State */
+.btn-downloaded {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.25rem;
+  font-family: var(--font-family-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #10b981;
+  transition: all 0.2s ease;
+}
+
+/* Hover on Desktop OR Active delete state on Mobile -> Turn Red */
+.btn-downloaded:hover, .btn-downloaded.delete-active {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+/* Chapter & Verse Grid Number Buttons - Explicit High Contrast */
+.num-grid-btn {
+  background-color: var(--surface-color) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  border-radius: 12px !important;
+  padding: 1rem 0.5rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+.num-grid-btn:hover {
+  border-color: var(--accent-color) !important;
+  color: var(--accent-color) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: var(--card-shadow-hover) !important;
+}
+
+/* Custom Styled Select Dropdown */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--surface-color);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.5rem 2.25rem 0.5rem 1rem;
+  font-family: var(--font-family-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23f59e0b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 0.65rem auto;
+}
+
+select:focus, select:hover {
+  border-color: var(--accent-color);
+}
+
+select option {
+  background-color: #272727;
+  color: #f4f4f5;
+  padding: 0.75rem;
 }
 
 /* Modern Card System */
@@ -223,16 +299,20 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--accent-color);
 }
 
-/* Modal Styling */
+/* Strictly Fixed Centered Modal System */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
   padding: 1rem;
   animation: fadeIn 0.2s ease;
 }
@@ -242,11 +322,12 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2.25rem;
-  max-width: 450px;
+  max-width: 480px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: auto !important;
 }
 
 @keyframes fadeIn {
