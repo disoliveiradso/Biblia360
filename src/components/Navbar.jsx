@@ -1,33 +1,153 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { Moon, Sun, Download, Book, Music, BookOpen } from 'lucide-react';
+import { Moon, Sun, Download, Book, Music, BookOpen, Sparkles } from 'lucide-react';
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <nav style={{
+    <header style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
       background: 'var(--nav-bg)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
       borderBottom: '1px solid var(--border-color)',
-      padding: '1rem',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
+      transition: 'all 0.3s ease'
     }}>
-      <Link to="/" style={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        📖 Bíblia360
-      </Link>
-      
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <Link to="/biblia" title="Bíblia"><Book size={20} /></Link>
-        <Link to="/harpa" title="Harpa"><Music size={20} /></Link>
-        <Link to="/ebd" title="Lições da EBD"><BookOpen size={20} /></Link>
-        <Link to="/meus-downloads" title="Downloads Offline"><Download size={20} /></Link>
-        <button onClick={toggleTheme} className="btn-outline" style={{ border: 'none', padding: '0.5rem' }}>
-          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-        </button>
+      <div style={{
+        maxWidth: '1140px',
+        margin: '0 auto',
+        padding: '0.85rem 1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        {/* Brand Logo */}
+        <Link to="/" style={{
+          fontSize: '1.35rem',
+          fontWeight: '800',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.65rem',
+          color: 'var(--text-primary)',
+          letterSpacing: '-0.03em'
+        }}>
+          <div style={{
+            background: 'var(--accent-light)',
+            color: 'var(--accent-color)',
+            padding: '0.5rem',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <BookOpen size={22} strokeWidth={2.5} />
+          </div>
+          <span>Bíblia<span style={{ color: 'var(--accent-color)' }}>360</span></span>
+        </Link>
+
+        {/* Navigation Menu */}
+        <nav style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <NavLink 
+            to="/biblia" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 0.9rem',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)',
+              backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
+              transition: 'all 0.2s ease'
+            })}
+          >
+            <Book size={18} />
+            <span>Bíblia</span>
+          </NavLink>
+
+          <NavLink 
+            to="/harpa" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 0.9rem',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)',
+              backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
+              transition: 'all 0.2s ease'
+            })}
+          >
+            <Music size={18} />
+            <span>Harpa</span>
+          </NavLink>
+
+          <NavLink 
+            to="/ebd" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 0.9rem',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)',
+              backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
+              transition: 'all 0.2s ease'
+            })}
+          >
+            <Sparkles size={18} />
+            <span>EBD</span>
+          </NavLink>
+
+          <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.25rem' }} />
+
+          <NavLink 
+            to="/meus-downloads" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 0.9rem',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)',
+              backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
+              transition: 'all 0.2s ease'
+            })}
+            title="Gerenciar Downloads"
+          >
+            <Download size={18} />
+            <span style={{ display: 'none', minWidth: '600px' }}>Downloads</span>
+          </NavLink>
+
+          {/* Theme Toggle Button */}
+          <button 
+            onClick={toggleTheme} 
+            className="btn-outline"
+            aria-label="Alternar tema"
+            style={{
+              padding: '0.5rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </nav>
       </div>
-    </nav>
+    </header>
   );
 }

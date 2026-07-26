@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ReadingToolbar from '../components/ReadingToolbar';
 import { db, checkEbdQuota } from '../services/db';
-import { Download, AlertCircle } from 'lucide-react';
+import { Download, AlertTriangle, ExternalLink, CheckCircle2, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Ebd() {
-  const [lessons, setLessons] = useState([
-    { id: '1', title: 'Lição 1 - A Doutrina do Pecado' },
-    { id: '2', title: 'Lição 2 - A Salvação pela Graça' }
+  const [lessons] = useState([
+    { id: '1', title: 'Lição 01: A Revelação Espiritual da Bíblia', theme: 'Estudo sobre a inspiração divina e a autoridade das Escrituras.' },
+    { id: '2', title: 'Lição 02: A Doutrina da Salvação e Graça', theme: 'Análise teológica sobre a redenção pela fé e o plano divino.' }
   ]);
   const [showModal, setShowModal] = useState(false);
   const [downloaded, setDownloaded] = useState({});
@@ -35,37 +36,107 @@ export default function Ebd() {
   return (
     <div>
       <ReadingToolbar />
-      <h1 style={{ marginBottom: '2rem' }}>Lições da EBD</h1>
-      <p style={{ opacity: 0.8, marginBottom: '2rem' }}>
-        <em>Fonte e créditos: Estudantes da Bíblia / CPAD (https://www.estudantesdabiblia.com.br/)</em>
-      </p>
 
-      <div className="reading-content">
+      {/* Page Header */}
+      <div style={{ marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+          <div style={{
+            padding: '0.4rem',
+            borderRadius: '8px',
+            backgroundColor: 'var(--accent-light)',
+            color: 'var(--accent-color)',
+            display: 'flex'
+          }}>
+            <Sparkles size={20} />
+          </div>
+          <h1 style={{ fontSize: '2rem', margin: 0 }}>Lições da EBD</h1>
+        </div>
+
+        {/* Dynamic Credits */}
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span>Fonte e créditos:</span>
+          <a 
+            href="https://www.estudantesdabiblia.com.br/cpad_sumario_geral.htm" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ color: 'var(--accent-color)', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+          >
+            Estudantes da Bíblia / CPAD <ExternalLink size={12} />
+          </a>
+        </p>
+      </div>
+
+      {/* Content Section */}
+      <div className="reading-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {lessons.map(l => (
-          <div key={l.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h3 style={{ margin: '0 0 0.5rem' }}>{l.title}</h3>
+          <div key={l.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ flex: 1, minWidth: '240px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+                <span className="badge">Sumário CPAD</span>
+                <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{l.title}</h3>
+              </div>
+              <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', margin: 0, fontFamily: 'var(--font-family-ui)' }}>
+                {l.theme}
+              </p>
             </div>
+
             <button 
-              className="btn" 
+              className={downloaded[l.id] ? "btn btn-outline" : "btn"} 
               onClick={() => handleDownload(l)}
               disabled={downloaded[l.id]}
+              style={{
+                borderColor: downloaded[l.id] ? 'var(--border-color)' : undefined,
+                color: downloaded[l.id] ? 'var(--text-muted)' : undefined,
+                cursor: downloaded[l.id] ? 'default' : 'pointer'
+              }}
             >
-              {downloaded[l.id] ? 'Baixado' : <><Download size={16} style={{ marginRight: '0.5rem' }} /> Baixar Offline</>}
+              {downloaded[l.id] ? (
+                <>
+                  <CheckCircle2 size={16} color="var(--accent-color)" />
+                  <span>Baixada Offline</span>
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  <span>Salvar Lição</span>
+                </>
+              )}
             </button>
           </div>
         ))}
       </div>
 
+      {/* Quota Exceeded Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <AlertCircle size={48} color="orange" style={{ marginBottom: '1rem' }} />
-            <h3>Limite Excedido</h3>
-            <p>Você atingiu o limite máximo de armazenamento offline (1 lição). Para baixar este novo conteúdo, por favor acesse a página de Downloads e exclua a lição antiga.</p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
-              <button className="btn btn-outline" onClick={() => setShowModal(false)}>Fechar</button>
-              <a href="/meus-downloads" className="btn">Ir para Downloads</a>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem'
+            }}>
+              <AlertTriangle size={32} />
+            </div>
+
+            <h3 style={{ fontSize: '1.35rem', marginBottom: '0.75rem' }}>Limite de Armazenamento Excedido</h3>
+            
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
+              Você atingiu o limite máximo de armazenamento offline para esta seção (máximo de 1 lição salva). Para baixar este novo conteúdo, por favor acesse a página de Downloads e exclua a lição antiga.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button className="btn btn-outline" onClick={() => setShowModal(false)}>
+                Cancelar
+              </button>
+              <Link to="/meus-downloads" className="btn">
+                Ir para Downloads
+              </Link>
             </div>
           </div>
         </div>
